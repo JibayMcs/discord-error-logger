@@ -1,26 +1,23 @@
 <?php
 
-namespace VendorName\Skeleton;
+namespace JibayMcs\DiscordErrorLogger;
 
-use Filament\Support\Assets\AlpineComponent;
 use Filament\Support\Assets\Asset;
 use Filament\Support\Assets\Css;
 use Filament\Support\Assets\Js;
-use Filament\Support\Facades\FilamentAsset;
-use Filament\Support\Facades\FilamentIcon;
-use Illuminate\Filesystem\Filesystem;
-use Livewire\Features\SupportTesting\Testable;
+use Illuminate\Log\Events\MessageLogged;
+use JibayMcs\DiscordErrorLogger\Listeners\DiscordNotifyOnError;
 use Spatie\LaravelPackageTools\Commands\InstallCommand;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
-use VendorName\Skeleton\Commands\SkeletonCommand;
-use VendorName\Skeleton\Testing\TestsSkeleton;
+use JibayMcs\DiscordErrorLogger\Commands\DiscordErrorLoggerCommand;
 
-class SkeletonServiceProvider extends PackageServiceProvider
+class DiscordErrorLoggerServiceProvider extends PackageServiceProvider
 {
-    public static string $name = 'skeleton';
+    public static string $name = 'discord-error-logger';
 
-    public static string $viewNamespace = 'skeleton';
+    public static string $viewNamespace = 'discord-error-logger';
+
 
     public function configurePackage(Package $package): void
     {
@@ -30,13 +27,13 @@ class SkeletonServiceProvider extends PackageServiceProvider
          * More info: https://github.com/spatie/laravel-package-tools
          */
         $package->name(static::$name)
-            ->hasCommands($this->getCommands())
+//            ->hasCommands($this->getCommands())
             ->hasInstallCommand(function (InstallCommand $command) {
                 $command
-                    ->publishConfigFile()
-                    ->publishMigrations()
-                    ->askToRunMigrations()
-                    ->askToStarRepoOnGitHub(':vendor_slug/:package_slug');
+                    ->publishConfigFile();
+//                    ->publishMigrations()
+//                    ->askToRunMigrations()
+//                    ->askToStarRepoOnGitHub('jibaymcs/discord-error-logger');
             });
 
         $configFileName = $package->shortName();
@@ -45,27 +42,28 @@ class SkeletonServiceProvider extends PackageServiceProvider
             $package->hasConfigFile();
         }
 
-        if (file_exists($package->basePath('/../database/migrations'))) {
+        /*if (file_exists($package->basePath('/../database/migrations'))) {
             $package->hasMigrations($this->getMigrations());
-        }
+        }*/
 
         if (file_exists($package->basePath('/../resources/lang'))) {
             $package->hasTranslations();
         }
 
-        if (file_exists($package->basePath('/../resources/views'))) {
+        /*if (file_exists($package->basePath('/../resources/views'))) {
             $package->hasViews(static::$viewNamespace);
-        }
+        }*/
     }
 
     public function packageRegistered(): void
     {
+        $this->app->register(EventServiceProvider::class);
     }
 
     public function packageBooted(): void
     {
         // Asset Registration
-        FilamentAsset::register(
+        /*FilamentAsset::register(
             $this->getAssets(),
             $this->getAssetPackageName()
         );
@@ -82,18 +80,18 @@ class SkeletonServiceProvider extends PackageServiceProvider
         if (app()->runningInConsole()) {
             foreach (app(Filesystem::class)->files(__DIR__ . '/../stubs/') as $file) {
                 $this->publishes([
-                    $file->getRealPath() => base_path("stubs/skeleton/{$file->getFilename()}"),
-                ], 'skeleton-stubs');
+                    $file->getRealPath() => base_path("stubs/discord-error-logger/{$file->getFilename()}"),
+                ], 'discord-error-logger-stubs');
             }
         }
 
         // Testing
-        Testable::mixin(new TestsSkeleton());
+        Testable::mixin(new TestsDiscordErrorLogger());*/
     }
 
     protected function getAssetPackageName(): ?string
     {
-        return ':vendor_slug/:package_slug';
+        return 'jibaymcs/discord-error-logger';
     }
 
     /**
@@ -102,9 +100,9 @@ class SkeletonServiceProvider extends PackageServiceProvider
     protected function getAssets(): array
     {
         return [
-            // AlpineComponent::make('skeleton', __DIR__ . '/../resources/dist/components/skeleton.js'),
-            Css::make('skeleton-styles', __DIR__ . '/../resources/dist/skeleton.css'),
-            Js::make('skeleton-scripts', __DIR__ . '/../resources/dist/skeleton.js'),
+            // AlpineComponent::make('discord-error-logger', __DIR__ . '/../resources/dist/components/discord-error-logger.js'),
+            Css::make('discord-error-logger-styles', __DIR__ . '/../resources/dist/discord-error-logger.css'),
+            Js::make('discord-error-logger-scripts', __DIR__ . '/../resources/dist/discord-error-logger.js'),
         ];
     }
 
@@ -114,7 +112,7 @@ class SkeletonServiceProvider extends PackageServiceProvider
     protected function getCommands(): array
     {
         return [
-            SkeletonCommand::class,
+            DiscordErrorLoggerCommand::class,
         ];
     }
 
@@ -148,7 +146,7 @@ class SkeletonServiceProvider extends PackageServiceProvider
     protected function getMigrations(): array
     {
         return [
-            'create_skeleton_table',
+            'create_discord-error-logger_table',
         ];
     }
 }

@@ -1,12 +1,12 @@
 <?php
 
-namespace VendorName\Skeleton\Commands;
+namespace JibayMcs\DiscordErrorLogger\Commands;
 
 use Illuminate\Console\Command;
 
-class SkeletonCommand extends Command
+class DiscordErrorLoggerCommand extends Command
 {
-    public $signature = 'skeleton';
+    public $signature = 'discord-error-logger';
 
     public $description = 'My command';
 

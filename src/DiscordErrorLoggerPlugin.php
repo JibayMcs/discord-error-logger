@@ -1,15 +1,15 @@
 <?php
 
-namespace VendorName\Skeleton;
+namespace JibayMcs\DiscordErrorLogger;
 
 use Filament\Contracts\Plugin;
 use Filament\Panel;
 
-class SkeletonPlugin implements Plugin
+class DiscordErrorLoggerPlugin implements Plugin
 {
     public function getId(): string
     {
-        return 'skeleton';
+        return 'discord-error-logger';
     }
 
     public function register(Panel $panel): void
