@@ -25,9 +25,9 @@ class DiscordNotifyOnError
         if (isset($event->context['exception'])) {
             $exception = $event->context['exception'];
 
-            $errorHash = md5($exception->getMessage() . $exception->getFile());
+            $errorHash = md5($exception->getMessage().$exception->getFile());
 
-            $cacheKey = 'error_mailer_' . $errorHash;
+            $cacheKey = 'error_mailer_'.$errorHash;
             $coolDownPeriod = 15;
 
             $ideScheme = 'phpstorm';
@@ -35,7 +35,7 @@ class DiscordNotifyOnError
             $projectPath = base_path();
             $hidePlaceholder = '';
 
-            if (!Cache::has($cacheKey)) {
+            if (! Cache::has($cacheKey)) {
                 $embeds = [
                     $this->exceptionToMarkdown(
                         exception: $exception,
@@ -43,27 +43,27 @@ class DiscordNotifyOnError
                         projectPath: $projectPath,
                         hidePlaceholder: $hidePlaceholder,
                         ideScheme: $ideScheme
-                    )
+                    ),
                 ];
 
                 $filePath = $exception->getFile();
                 $fileLine = $exception->getLine();
-                $ideUrl = $ideScheme . '://open?file=' . ($projectPath . $filePath) . '&line=' . $fileLine;
+                $ideUrl = $ideScheme.'://open?file='.($projectPath.$filePath).'&line='.$fileLine;
 
-                $ideUrl = "[" . basename($exception->getFile()) . "]($ideUrl)";
+                $ideUrl = '['.basename($exception->getFile())."]($ideUrl)";
 
                 $components = [
                     [
-                        "type" => 1,
-                        "components" => [
+                        'type' => 1,
+                        'components' => [
                             [
-                                "type" => 2,
-                                "style" => 3,
-                                "label" => "Fixed",
-                                "custom_id" => 'click_me'
-                            ]
-                        ]
-                    ]
+                                'type' => 2,
+                                'style' => 3,
+                                'label' => 'Fixed',
+                                'custom_id' => 'click_me',
+                            ],
+                        ],
+                    ],
                 ];
 
                 $response = $this->service->sendMessage(
@@ -82,16 +82,16 @@ class DiscordNotifyOnError
         }
     }
 
-    function exceptionToMarkdown($exception, $pathToHide, $projectPath, string $hidePlaceholder = '', string $ideScheme = 'phpstorm'): array
+    public function exceptionToMarkdown($exception, $pathToHide, $projectPath, string $hidePlaceholder = '', string $ideScheme = 'phpstorm'): array
     {
         // Remplacer le chemin par un placeholder générique
         $genericPathPlaceholder = $hidePlaceholder;
 
         // Informations de base de l'exception
-        $title = "Exception: " . get_class($exception);
-        $description = "**Message:** " . str_replace($pathToHide, $genericPathPlaceholder, $exception->getMessage()) . "\n" .
-            "**Fichier:** " . str_replace($pathToHide, $genericPathPlaceholder, $exception->getFile()) . "\n" .
-            "**Ligne:** " . $exception->getLine();
+        $title = 'Exception: '.get_class($exception);
+        $description = '**Message:** '.str_replace($pathToHide, $genericPathPlaceholder, $exception->getMessage())."\n".
+            '**Fichier:** '.str_replace($pathToHide, $genericPathPlaceholder, $exception->getFile())."\n".
+            '**Ligne:** '.$exception->getLine();
 
         // Générer et nettoyer la trace de la pile, limitant aux 11 premières entrées (de #0 à #10)
         $stackTraceLines = explode("\n", $exception->getTraceAsString());
@@ -101,25 +101,24 @@ class DiscordNotifyOnError
         }, $filteredStackTraceLines));
 
         // Description supplémentaire avec la trace de la pile filtrée
-        $description .= "\n**Trace de la pile (filtrée):**\n```" . $cleanStackTrace . "```";
-
+        $description .= "\n**Trace de la pile (filtrée):**\n```".$cleanStackTrace.'```';
 
         // Créer le tableau d'embed pour Restcord
         $embed = [
-            "title" => substr($title, 0, 256), // Limite de 256 caractères pour le titre
-            "description" => substr($description, 0, 2000), // Limite de 2048 caractères pour la description
-            "color" => 0xFF0000, // Couleur rouge pour indiquer une erreur
-            "timestamp" => date('c'), // Timestamp actuel
-//            "url" => $ideUrl,
-            "footer" => [
-                "text" => "Exception Handler"
+            'title' => substr($title, 0, 256), // Limite de 256 caractères pour le titre
+            'description' => substr($description, 0, 2000), // Limite de 2048 caractères pour la description
+            'color' => 0xFF0000, // Couleur rouge pour indiquer une erreur
+            'timestamp' => date('c'), // Timestamp actuel
+            //            "url" => $ideUrl,
+            'footer' => [
+                'text' => 'Exception Handler',
             ],
-            "fields" => [
+            'fields' => [
                 [
-                    "name" => "Conseil",
-                    "value" => "Vérifiez la trace de la pile pour identifier la source de l'exception."
-                ]
-            ]
+                    'name' => 'Conseil',
+                    'value' => "Vérifiez la trace de la pile pour identifier la source de l'exception.",
+                ],
+            ],
         ];
 
         return $embed;

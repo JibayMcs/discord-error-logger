@@ -8,7 +8,6 @@ use JibayMcs\DiscordErrorLogger\Listeners\DiscordNotifyOnError;
 
 class EventServiceProvider extends ServiceProvider
 {
-
     protected $listen = [
         MessageLogged::class => [
             DiscordNotifyOnError::class,
@@ -19,5 +18,4 @@ class EventServiceProvider extends ServiceProvider
     {
         parent::boot();
     }
-
 }

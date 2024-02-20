@@ -5,19 +5,16 @@ namespace JibayMcs\DiscordErrorLogger;
 use Filament\Support\Assets\Asset;
 use Filament\Support\Assets\Css;
 use Filament\Support\Assets\Js;
-use Illuminate\Log\Events\MessageLogged;
-use JibayMcs\DiscordErrorLogger\Listeners\DiscordNotifyOnError;
+use JibayMcs\DiscordErrorLogger\Commands\DiscordErrorLoggerCommand;
 use Spatie\LaravelPackageTools\Commands\InstallCommand;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
-use JibayMcs\DiscordErrorLogger\Commands\DiscordErrorLoggerCommand;
 
 class DiscordErrorLoggerServiceProvider extends PackageServiceProvider
 {
     public static string $name = 'discord-error-logger';
 
     public static string $viewNamespace = 'discord-error-logger';
-
 
     public function configurePackage(Package $package): void
     {
@@ -31,9 +28,9 @@ class DiscordErrorLoggerServiceProvider extends PackageServiceProvider
             ->hasInstallCommand(function (InstallCommand $command) {
                 $command
                     ->publishConfigFile();
-//                    ->publishMigrations()
-//                    ->askToRunMigrations()
-//                    ->askToStarRepoOnGitHub('jibaymcs/discord-error-logger');
+                //                    ->publishMigrations()
+                //                    ->askToRunMigrations()
+                //                    ->askToStarRepoOnGitHub('jibaymcs/discord-error-logger');
             });
 
         $configFileName = $package->shortName();
@@ -101,8 +98,8 @@ class DiscordErrorLoggerServiceProvider extends PackageServiceProvider
     {
         return [
             // AlpineComponent::make('discord-error-logger', __DIR__ . '/../resources/dist/components/discord-error-logger.js'),
-            Css::make('discord-error-logger-styles', __DIR__ . '/../resources/dist/discord-error-logger.css'),
-            Js::make('discord-error-logger-scripts', __DIR__ . '/../resources/dist/discord-error-logger.js'),
+            Css::make('discord-error-logger-styles', __DIR__.'/../resources/dist/discord-error-logger.css'),
+            Js::make('discord-error-logger-scripts', __DIR__.'/../resources/dist/discord-error-logger.js'),
         ];
     }
 

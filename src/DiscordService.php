@@ -2,14 +2,10 @@
 
 namespace JibayMcs\DiscordErrorLogger;
 
-use Discord\Discord;
-use Discord\Exceptions\IntentException;
 use Illuminate\Support\Facades\Http;
-use RestCord\DiscordClient;
 
 class DiscordService
 {
-
     protected $token;
 
     protected $api_url;
@@ -17,7 +13,7 @@ class DiscordService
     public function __construct()
     {
         $this->token = config('discord-error-logger.token');
-        $this->api_url = "https://discord.com/api/";
+        $this->api_url = 'https://discord.com/api/';
     }
 
     public function sendMessage(string $channelId, string $content, ?array $embeds = null, ?array $components = null)
@@ -27,18 +23,17 @@ class DiscordService
             'content' => $content,
         ];
 
-        if($embeds) {
+        if ($embeds) {
             $message['embeds'] = $embeds;
         }
 
-        if($components) {
+        if ($components) {
             $message['components'] = $components;
         }
 
-
         return Http::withHeaders([
-            'Authorization' => 'Bot ' . $this->token,
+            'Authorization' => 'Bot '.$this->token,
             'Content-Type' => 'application/json',
-        ])->post($this->api_url . "channels/{$channelId}/messages", $message);
+        ])->post($this->api_url."channels/{$channelId}/messages", $message);
     }
 }
