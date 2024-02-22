@@ -2,27 +2,45 @@
 
 namespace JibayMcs\DiscordErrorLogger;
 
+use Discord\Discord;
+use Discord\Exceptions\IntentException;
+use Filament\Notifications\Notification;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\HtmlString;
+use RestCord\DiscordClient;
 
 class DiscordService
 {
+
     protected $token;
 
     protected $api_url;
 
     public function __construct()
     {
-        $this->token = 'SS2I:6a6240737332692d6469676974616c2e66723137303835323537323168b63a93f577cf59868c0e34f78f5c09';
-        $this->api_url = 'http://127.0.0.1:8080';
+        $this->token = DiscordErrorLoggerPlugin::get()->getToken();
+        $this->api_url = DiscordErrorLoggerPlugin::get()->getApiUrl();
     }
 
-    public function sendMessage(string $route, array $content, string $method = 'post')
+    public function sendMessage(string $route, array $content, string $controller, string $method = 'post')
     {
-        return Http::withHeaders([
-            'Authorization' => 'Bearer '.$this->token,
-            'API-Controller' => 'ErrorsController',
-            'API-Project' => '3def3f18-4b61-4e8b-bb44-708accc7137e',
-            'Content-Type' => 'application/json',
-        ])->{$method}($this->api_url."{$route}", $content);
+        try {
+            return Http::withHeaders([
+                'Authorization' => 'Bearer ' . $this->token,
+                'API-Controller' => $controller,
+                'API-Project' => DiscordErrorLoggerPlugin::get()->getSiteId(),
+                'API-Project-Env' => config('app.env'),
+                'API-Guild' => DiscordErrorLoggerPlugin::get()->getGuildId(),
+                'Content-Type' => 'application/json',
+            ])->{$method}($this->api_url . "{$route}", $content);
+        } catch (ConnectionException $e) {
+            Notification::make('unable-to-connect-to-discord')
+                ->warning()
+                ->title('Unable to connect to Discord Bot Services')
+                ->body(new HtmlString("Unable to connect to Discord Bot Services.\nPlease check your internet connection and try again."))
+                ->send();
+            return null;
+        }
     }
 }

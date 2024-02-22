@@ -24,18 +24,18 @@ class DiscordNotifyOnError
         if (isset($event->context['exception'])) {
             $exception = $event->context['exception'];
 
-            $errorHash = md5($exception->getMessage().$exception->getFile());
+            $errorHash = md5($exception->getMessage() . $exception->getFile());
 
-            $cacheKey = 'error_mailer_'.$errorHash;
+            $cacheKey = 'error_mailer_' . $errorHash;
             $coolDownPeriod = 15;
 
-            if (! Cache::has($cacheKey)) {
-                $response = $this->service->sendMessage('/api/errors/new', $this->exceptionToJson($exception, 1209854464362684416));
+            if (!Cache::has($cacheKey)) {
+                $response = $this->service->sendMessage('/api/errors/new', $this->exceptionToJson($exception, 1209854464362684416), 'ErrorsController');
 
-                if ($response->successful()) {
-                    Cache::put($cacheKey, true, now()->addMinutes($coolDownPeriod));
-                } else {
-                    dd($response->body());
+                if ($response) {
+                    if ($response->successful()) {
+                        Cache::put($cacheKey, true, now()->addMinutes($coolDownPeriod));
+                    }
                 }
             }
         }
@@ -56,7 +56,7 @@ class DiscordNotifyOnError
 
         // Partitionner la collection en deux : ceux hors de "vendor" et ceux dans "vendor"
         [$nonVendorTraces, $vendorTraces] = $trace->partition(function ($trace) {
-            return ! str_contains($trace['file'], '/vendor/');
+            return !str_contains($trace['file'], '/vendor/');
         });
 
         // Concaténer les collections pour mettre les traces non-vendor en tête
