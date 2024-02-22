@@ -8,8 +8,11 @@ use Filament\Panel;
 class DiscordErrorLoggerPlugin implements Plugin
 {
     protected string $siteId;
+
     protected string $token;
+
     private string $guildId;
+
     private string $api_url;
 
     public function getId(): string
@@ -43,6 +46,7 @@ class DiscordErrorLoggerPlugin implements Plugin
     public function siteId(string $siteId): static
     {
         $this->siteId = $siteId;
+
         return $this;
     }
 
@@ -54,6 +58,7 @@ class DiscordErrorLoggerPlugin implements Plugin
     public function token(string $token): static
     {
         $this->token = $token;
+
         return $this;
     }
 
@@ -65,6 +70,7 @@ class DiscordErrorLoggerPlugin implements Plugin
     public function apiUrl(string $api_url): static
     {
         $this->api_url = $api_url;
+
         return $this;
     }
 
@@ -76,6 +82,7 @@ class DiscordErrorLoggerPlugin implements Plugin
     public function guildId(string $guildId): static
     {
         $this->guildId = $guildId;
+
         return $this;
     }
 
