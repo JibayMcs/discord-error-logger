@@ -2,9 +2,11 @@
 
 namespace JibayMcs\DiscordErrorLogger\Listeners;
 
+use Exception;
 use Illuminate\Log\Events\MessageLogged;
 use Illuminate\Support\Facades\Cache;
 use JibayMcs\DiscordErrorLogger\DiscordService;
+use Spatie\FlareClient\Flare;
 
 class DiscordNotifyOnError
 {
@@ -20,58 +22,16 @@ class DiscordNotifyOnError
     {
         $coolDownPeriod = 0;
 
-        $channelId = 1209508518051323914;
-
         if (isset($event->context['exception'])) {
             $exception = $event->context['exception'];
 
-            $errorHash = md5($exception->getMessage().$exception->getFile());
+            $errorHash = md5($exception->getMessage() . $exception->getFile());
 
-            $cacheKey = 'error_mailer_'.$errorHash;
+            $cacheKey = 'error_mailer_' . $errorHash;
             $coolDownPeriod = 15;
 
-            $ideScheme = 'phpstorm';
-            $pathToHide = base_path();
-            $projectPath = base_path();
-            $hidePlaceholder = '';
-
-            if (! Cache::has($cacheKey)) {
-                $embeds = [
-                    $this->exceptionToMarkdown(
-                        exception: $exception,
-                        pathToHide: $pathToHide,
-                        projectPath: $projectPath,
-                        hidePlaceholder: $hidePlaceholder,
-                        ideScheme: $ideScheme
-                    ),
-                ];
-
-                $filePath = $exception->getFile();
-                $fileLine = $exception->getLine();
-                $ideUrl = $ideScheme.'://open?file='.($projectPath.$filePath).'&line='.$fileLine;
-
-                $ideUrl = '['.basename($exception->getFile())."]($ideUrl)";
-
-                $components = [
-                    [
-                        'type' => 1,
-                        'components' => [
-                            [
-                                'type' => 2,
-                                'style' => 3,
-                                'label' => 'Fixed',
-                                'custom_id' => 'click_me',
-                            ],
-                        ],
-                    ],
-                ];
-
-                $response = $this->service->sendMessage(
-                    channelId: $channelId,
-                    content: $ideUrl,
-                    embeds: $embeds,
-                    components: $components
-                );
+            if (!Cache::has($cacheKey)) {
+                $response = $this->service->sendMessage('/api/errors/new', $this->exceptionToJson($exception, 1209854464362684416));
 
                 if ($response->successful()) {
                     Cache::put($cacheKey, true, now()->addMinutes($coolDownPeriod));
@@ -82,45 +42,60 @@ class DiscordNotifyOnError
         }
     }
 
-    public function exceptionToMarkdown($exception, $pathToHide, $projectPath, string $hidePlaceholder = '', string $ideScheme = 'phpstorm'): array
+    private function exceptionToJson(Exception $exception, int $channelId): array
     {
-        // Remplacer le chemin par un placeholder générique
-        $genericPathPlaceholder = $hidePlaceholder;
+        //get the first trace of the exception where the class path is app/
 
-        // Informations de base de l'exception
-        $title = 'Exception: '.get_class($exception);
-        $description = '**Message:** '.str_replace($pathToHide, $genericPathPlaceholder, $exception->getMessage())."\n".
-            '**Fichier:** '.str_replace($pathToHide, $genericPathPlaceholder, $exception->getFile())."\n".
-            '**Ligne:** '.$exception->getLine();
+        $trace = collect($exception->getTrace())->map(function ($trace) {
+            return [
+                'file' => $trace['file'] ?? '',
+                'line' => $trace['line'] ?? '',
+                'function' => $trace['function'] ?? '',
+                'class' => $trace['class'] ?? '',
+            ];
+        });
 
-        // Générer et nettoyer la trace de la pile, limitant aux 11 premières entrées (de #0 à #10)
-        $stackTraceLines = explode("\n", $exception->getTraceAsString());
-        $filteredStackTraceLines = array_slice($stackTraceLines, 0, 11); // Garde seulement les 11 premières lignes
-        $cleanStackTrace = implode("\n", array_map(function ($line) use ($pathToHide, $genericPathPlaceholder) {
-            return str_replace($pathToHide, $genericPathPlaceholder, $line);
-        }, $filteredStackTraceLines));
+        // Partitionner la collection en deux : ceux hors de "vendor" et ceux dans "vendor"
+        [$nonVendorTraces, $vendorTraces] = $trace->partition(function ($trace) {
+            return !str_contains($trace['file'], '/vendor/');
+        });
 
-        // Description supplémentaire avec la trace de la pile filtrée
-        $description .= "\n**Trace de la pile (filtrée):**\n```".$cleanStackTrace.'```';
+        // Concaténer les collections pour mettre les traces non-vendor en tête
+        $orderedTraces = $nonVendorTraces->concat($vendorTraces)->all();
 
-        // Créer le tableau d'embed pour Restcord
-        $embed = [
-            'title' => substr($title, 0, 256), // Limite de 256 caractères pour le titre
-            'description' => substr($description, 0, 2000), // Limite de 2048 caractères pour la description
-            'color' => 0xFF0000, // Couleur rouge pour indiquer une erreur
-            'timestamp' => date('c'), // Timestamp actuel
-            //            "url" => $ideUrl,
-            'footer' => [
-                'text' => 'Exception Handler',
-            ],
-            'fields' => [
-                [
-                    'name' => 'Conseil',
-                    'value' => "Vérifiez la trace de la pile pour identifier la source de l'exception.",
-                ],
+        return [
+            'channel_id' => $channelId,
+            'env' => $this->constructEnvInformation(),
+            'user' => $this->getUserInformation(),
+            'base_path' => base_path(),
+            'date' => now()->toIso8601String(),
+            'error' => [
+                'message' => $exception->getMessage(),
+                'file' => $exception->getFile(),
+                'line' => $exception->getLine(),
+                'stack_trace' => $orderedTraces,
             ],
         ];
+    }
 
-        return $embed;
+    private function constructEnvInformation(): array
+    {
+        return [
+            'env' => config('app.env'),
+            'php' => phpversion(),
+            'laravel' => app()->version(),
+        ];
+    }
+
+    private function getUserInformation(): ?array
+    {
+        if (auth()->check()) {
+            return [
+                'id' => auth()->id(),
+                'email' => auth()->user()->email,
+            ];
+        }
+
+        return null;
     }
 }

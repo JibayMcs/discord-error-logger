@@ -2,38 +2,31 @@
 
 namespace JibayMcs\DiscordErrorLogger;
 
+use Discord\Discord;
+use Discord\Exceptions\IntentException;
 use Illuminate\Support\Facades\Http;
+use RestCord\DiscordClient;
 
 class DiscordService
 {
+
     protected $token;
 
     protected $api_url;
 
     public function __construct()
     {
-        $this->token = config('discord-error-logger.token');
-        $this->api_url = 'https://discord.com/api/';
+        $this->token = 'SS2I:6a6240737332692d6469676974616c2e66723137303835323537323168b63a93f577cf59868c0e34f78f5c09';
+        $this->api_url = "http://127.0.0.1:8080";
     }
 
-    public function sendMessage(string $channelId, string $content, ?array $embeds = null, ?array $components = null)
+    public function sendMessage(string $route, array $content, string $method = 'post')
     {
-        $message = [
-            'channel.id' => $channelId,
-            'content' => $content,
-        ];
-
-        if ($embeds) {
-            $message['embeds'] = $embeds;
-        }
-
-        if ($components) {
-            $message['components'] = $components;
-        }
-
         return Http::withHeaders([
-            'Authorization' => 'Bot '.$this->token,
+            'Authorization' => 'Bearer ' . $this->token,
+            'API-Controller' => 'ErrorsController',
+            'API-Project' => '3def3f18-4b61-4e8b-bb44-708accc7137e',
             'Content-Type' => 'application/json',
-        ])->post($this->api_url."channels/{$channelId}/messages", $message);
+        ])->{$method}($this->api_url . "{$route}", $content);
     }
 }
